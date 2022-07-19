@@ -20,6 +20,24 @@ class VehicleInfo(object):
                 "waf_target": "bin/arducopter",
                 "default_params_filename": "default_params/copter.parm",
             },
+            "quad-optflow": {
+                "model": "+",
+                "waf_target": "bin/arducopter",
+                "default_params_filename": ["default_params/copter.parm",
+                                            "default_params/copter-optflow.parm" ],
+            },
+            "quad-oa": {
+                "model": "+",
+                "waf_target": "bin/arducopter",
+                "default_params_filename": ["default_params/copter.parm",
+                                            "default_params/copter-oa.parm" ],
+            },
+            "quad-optflow-nongps-oa": {
+                "model": "+",
+                "waf_target": "bin/arducopter",
+                "default_params_filename": ["default_params/copter.parm",
+                                            "default_params/copter-optflow-nongps-oa.parm" ],
+            },
             "X": {
                 "waf_target": "bin/arducopter",
                 "default_params_filename": "default_params/copter.parm",
@@ -136,6 +154,18 @@ class VehicleInfo(object):
                 "waf_target": "bin/arducopter",
                 "default_params_filename": ["default_params/copter.parm",
                                             "default_params/gazebo-iris.parm"],
+                "external": True,
+            },
+            "gazebo-iris-oa": {
+                "waf_target": "bin/arducopter",
+                "default_params_filename": ["default_params/copter.parm",
+                                            "default_params/copter-oa.parm" ],
+                "external": True,
+            },
+            "gazebo-iris-optflow-nongps-oa": {              
+                "waf_target": "bin/arducopter",
+                "default_params_filename": ["default_params/copter.parm",
+                                            "default_params/copter-optflow-nongps-oa.parm" ],
                 "external": True,
             },
             "airsim-copter": {
