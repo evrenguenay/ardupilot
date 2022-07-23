@@ -922,8 +922,8 @@ public:
 
     bool init(bool ignore_checks) override;
     void run() override;
-
-    bool requires_GPS() const override { return true; }
+    //23.07.2022 set from true to false:
+    bool requires_GPS() const override { return false; }
     bool has_manual_throttle() const override { return false; }
     bool allows_arming(AP_Arming::Method method) const override;
     bool is_autopilot() const override { return true; }

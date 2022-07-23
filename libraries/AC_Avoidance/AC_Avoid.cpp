@@ -196,7 +196,8 @@ void AC_Avoid::adjust_velocity(Vector3f &desired_vel_cms, bool &backing_up, floa
     float back_vel_down = 0.0f;
     
     // Avoidance in response to proximity sensor
-    if (proximity_avoidance_enabled() && _proximity_alt_enabled) {
+    // if (proximity_avoidance_enabled() && _proximity_alt_enabled) {
+    if (_proximity_alt_enabled){
         // Store velocity needed to back away from physical obstacles
         Vector3f backup_vel_proximity;
         adjust_velocity_proximity(kP, accel_cmss_limited, desired_vel_cms, backup_vel_proximity, kP_z,accel_cmss_z, dt);
