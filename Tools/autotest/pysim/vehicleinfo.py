@@ -162,12 +162,18 @@ class VehicleInfo(object):
                                             "default_params/copter-oa.parm" ],
                 "external": True,
             },
+            "gazebo-iris-oa-lidar": {              
+                "waf_target": "bin/arducopter",
+                "default_params_filename": ["default_params/copter.parm",
+                                            "default_params/copter-oa-lidar.parm" ],
+                "external": True,
+            },
             "gazebo-iris-optflow-nongps-oa": {              
                 "waf_target": "bin/arducopter",
                 "default_params_filename": ["default_params/copter.parm",
                                             "default_params/copter-optflow-nongps-oa.parm" ],
                 "external": True,
-            },
+            },            
             "airsim-copter": {
                 "waf_target": "bin/arducopter",
                 "default_params_filename": ["default_params/copter.parm",

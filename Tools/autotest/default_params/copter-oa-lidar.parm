@@ -1,0 +1,46 @@
+ARMING_CHECK 502
+GUID_OPTIONS 9
+
+EK3_ENABLE 1
+EK3_SRC_OPTIONS 0
+EK3_FLOW_DELAY 10
+
+EK3_SRC1_POSXY 3
+EK3_SRC1_POSZ 1
+EK3_SRC1_VELXY 3
+EK3_SRC1_VELZ 3
+EK3_SRC1_YAW 1
+
+EK3_SRC2_POSXY 0
+# RangeFinder
+EK3_SRC2_POSZ 2
+# OptFlow
+EK3_SRC2_VELXY 5
+EK3_SRC2_VELZ 0
+# Compass
+EK3_SRC2_YAW 1
+
+# 4: RangeFinder, 2:MavLink
+PRX_TYPE 2
+PRX_ORIENT 0
+PRX_MIN 0.2
+
+AVOID_ENABLE 1
+AVOID_DIST_MAX 7
+AVOID_MARGIN 2
+AVOID_BEHAVE 0
+AVOID_BACKUP_SPD 1
+AVOID_ACCEL_MAX 2
+AVOID_BACKUP_DZ 1
+
+# 3: Object Avoidance => Dijkstra w. BendyRuler
+OA_TYPE 3
+# will ignore objects more than this many meters from vehicle:
+OA_MARGIN_MAX 2
+# BendyRuler will search for clear path along the direction defined by this parameter
+OA_BR_TYPE 1
+OA_BR_LOOKAHEAD 7
+
+SIM_FLOW_ENABLE 1
+FLOW_TYPE 10
+SIM_SONAR_SCALE 10
