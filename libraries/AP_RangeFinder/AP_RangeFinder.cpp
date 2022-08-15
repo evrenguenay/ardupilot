@@ -652,9 +652,12 @@ RangeFinder::Status RangeFinder::status_orient(enum Rotation orientation) const
 void RangeFinder::handle_msg(const mavlink_message_t &msg)
 {
     uint8_t i;
+    mavlink_distance_sensor_t packet;
+    mavlink_msg_distance_sensor_decode(&msg, &packet);
+
     for (i=0; i<num_instances; i++) {
         if ((drivers[i] != nullptr) && ((Type)params[i].type.get() != Type::NONE)) {
-          drivers[i]->handle_msg(msg);
+          drivers[i]->handle_packet(packet);
         }
     }
 }

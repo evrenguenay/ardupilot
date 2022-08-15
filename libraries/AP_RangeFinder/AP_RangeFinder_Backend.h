@@ -34,6 +34,7 @@ public:
     virtual void init_serial(uint8_t serial_instance) {};
 
     virtual void handle_msg(const mavlink_message_t &msg) { return; }
+    virtual void handle_packet(const mavlink_distance_sensor_t &packet) { return; }
 #if HAL_MSP_RANGEFINDER_ENABLED
     virtual void handle_msp(const MSP::msp_rangefinder_data_message_t &pkt) { return; }
 #endif

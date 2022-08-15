@@ -29,6 +29,7 @@ public:
 
     // Get update from mavlink
     void handle_msg(const mavlink_message_t &msg) override;
+    void handle_packet(const mavlink_distance_sensor_t &package) override;
 
     int16_t max_distance_cm() const override;
     int16_t min_distance_cm() const override;

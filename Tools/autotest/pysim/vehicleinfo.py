@@ -156,6 +156,12 @@ class VehicleInfo(object):
                                             "default_params/gazebo-iris.parm"],
                 "external": True,
             },
+            "gazebo-iris-optflow": {
+                "waf_target": "bin/arducopter",
+                "default_params_filename": ["default_params/copter.parm",
+                                            "default_params/copter-optflow.parm"],
+                "external": True,
+            },
             "gazebo-iris-oa": {
                 "waf_target": "bin/arducopter",
                 "default_params_filename": ["default_params/copter.parm",

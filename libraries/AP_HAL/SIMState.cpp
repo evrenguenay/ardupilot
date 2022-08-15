@@ -332,7 +332,7 @@ void SIMState::set_height_agl(void)
         // remember home altitude as first non-zero altitude
         home_alt = _sitl->state.altitude;
     }
-
+ 
 #if AP_TERRAIN_AVAILABLE
     if (_sitl != nullptr &&
         _sitl->terrain_enable) {
