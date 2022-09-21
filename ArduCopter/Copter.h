@@ -119,9 +119,6 @@
 #if MODE_FOLLOW_ENABLED == ENABLED
  # include <AP_Follow/AP_Follow.h>
 #endif
-#if AC_FENCE == ENABLED
- # include <AC_Fence/AC_Fence.h>
-#endif
 #if AP_TERRAIN_AVAILABLE
  # include <AP_Terrain/AP_Terrain.h>
 #endif
@@ -132,9 +129,8 @@
 
 #include <AP_Mount/AP_Mount.h>
 
-#if CAMERA == ENABLED
- # include <AP_Camera/AP_Camera.h>
-#endif
+#include <AP_Camera/AP_Camera.h>
+
 #if HAL_BUTTON_ENABLED
  # include <AP_Button/AP_Button.h>
 #endif
@@ -152,12 +148,22 @@
 #if WINCH_ENABLED == ENABLED
  # include <AP_Winch/AP_Winch.h>
 #endif
-#if RPM_ENABLED == ENABLED
- #include <AP_RPM/AP_RPM.h>
-#endif
+#include <AP_RPM/AP_RPM.h>
 
 #if AP_SCRIPTING_ENABLED
 #include <AP_Scripting/AP_Scripting.h>
+#endif
+
+#if AC_CUSTOMCONTROL_MULTI_ENABLED == ENABLED
+#include <AC_CustomControl/AC_CustomControl.h>                  // Custom control library
+#endif
+
+#if AC_AVOID_ENABLED && !AP_FENCE_ENABLED
+  #error AC_Avoidance relies on AP_FENCE_ENABLED which is disabled
+#endif
+
+#if AC_OAPATHPLANNER_ENABLED && !AP_FENCE_ENABLED
+  #error AP_OAPathPlanner relies on AP_FENCE_ENABLED which is disabled
 #endif
 
 // Local modules
@@ -293,7 +299,7 @@ private:
         bool reset_target;          // true if target should be reset because of change in surface being tracked
     } surface_tracking;
 
-#if RPM_ENABLED == ENABLED
+#if AP_RPM_ENABLED
     AP_RPM rpm_sensor;
 #endif
 
@@ -305,7 +311,7 @@ private:
 
     // Optical flow sensor
 #if AP_OPTICALFLOW_ENABLED
-    OpticalFlow optflow;
+    AP_OpticalFlow optflow;
 #endif
 
     // system time in milliseconds of last recorded yaw reset from ekf
@@ -318,6 +324,9 @@ private:
         uint32_t start_ms;  // system time high vibration were last detected
         uint32_t clear_ms;  // system time high vibrations stopped
     } vibration_check;
+
+    // takeoff check
+    uint32_t takeoff_check_warning_ms;  // system time user was last warned of takeoff check failure
 
     // GCS selection
     GCS_Copter _gcs; // avoid using this; use gcs()
@@ -459,6 +468,10 @@ private:
     AC_WPNav *wp_nav;
     AC_Loiter *loiter_nav;
 
+#if AC_CUSTOMCONTROL_MULTI_ENABLED == ENABLED
+    AC_CustomControl custom_control{ahrs_view, attitude_control, motors, scheduler.get_loop_period_s()};
+#endif
+
 #if MODE_CIRCLE_ENABLED == ENABLED
     AC_Circle *circle_nav;
 #endif
@@ -473,18 +486,13 @@ private:
     bool auto_trim_started = false;
 
     // Camera
-#if CAMERA == ENABLED
+#if AP_CAMERA_ENABLED
     AP_Camera camera{MASK_LOG_CAMERA};
 #endif
 
     // Camera/Antenna mount tracking and stabilisation stuff
 #if HAL_MOUNT_ENABLED
     AP_Mount camera_mount;
-#endif
-
-    // AC_Fence library to reduce fly-aways
-#if AC_FENCE == ENABLED
-    AC_Fence fence;
 #endif
 
 #if AC_AVOID_ENABLED == ENABLED
@@ -663,7 +671,7 @@ private:
     void rc_loop();
     void throttle_loop();
     void update_batt_compass(void);
-    void fourhundred_hz_logging();
+    void loop_rate_logging();
     void ten_hz_logging_loop();
     void twentyfive_hz_logging();
     void three_hz_loop();
@@ -686,6 +694,10 @@ private:
     void rotate_body_frame_to_NE(float &x, float &y);
     uint16_t get_pilot_speed_dn() const;
     void run_rate_controller() { attitude_control->rate_controller_run(); }
+
+#if AC_CUSTOMCONTROL_MULTI_ENABLED == ENABLED
+    void run_custom_controller() { custom_control.update(); }
+#endif
 
     // avoidance.cpp
     void low_alt_avoidance();
@@ -764,7 +776,7 @@ private:
 #endif
 
     // fence.cpp
-#if AC_FENCE == ENABLED
+#if AP_FENCE_ENABLED
     void fence_check();
 #endif
 
@@ -803,6 +815,7 @@ private:
     void Log_Write_Control_Tuning();
     void Log_Write_Attitude();
     void Log_Write_EKF_POS();
+    void Log_Write_PIDS();
     void Log_Write_Data(LogDataID id, int32_t value);
     void Log_Write_Data(LogDataID id, uint32_t value);
     void Log_Write_Data(LogDataID id, int16_t value);
@@ -854,6 +867,9 @@ private:
     // Parameters.cpp
     void load_parameters(void) override;
     void convert_pid_parameters(void);
+#if HAL_PROXIMITY_ENABLED
+    void convert_prx_parameters();
+#endif
     void convert_lgr_parameters(void);
     void convert_tradheli_parameters(void) const;
     void convert_fs_options_params(void) const;
@@ -880,7 +896,9 @@ private:
     bool rangefinder_alt_ok() const;
     bool rangefinder_up_ok() const;
     void update_optical_flow(void);
-    void compass_cal_update(void);
+
+    // takeoff_check.cpp
+    void takeoff_check();
 
     // RC_Channel.cpp
     void save_trim();
@@ -983,7 +1001,7 @@ private:
 #if MODE_SMARTRTL_ENABLED == ENABLED
     ModeSmartRTL mode_smartrtl;
 #endif
-#if !HAL_MINIMIZE_FEATURES && AP_OPTICALFLOW_ENABLED
+#if MODE_FLOWHOLD_ENABLED == ENABLED
     ModeFlowHold mode_flowhold;
 #endif
 #if MODE_ZIGZAG_ENABLED == ENABLED

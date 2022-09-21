@@ -13,6 +13,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "AP_ICEngine.h"
+
+#if AP_ICENGINE_ENABLED
 
 #include <SRV_Channel/SRV_Channel.h>
 #include <GCS_MAVLink/GCS.h>
@@ -20,8 +23,6 @@
 #include <AP_Scheduler/AP_Scheduler.h>
 #include <AP_Notify/AP_Notify.h>
 #include <RC_Channel/RC_Channel.h>
-#include <Filter/LowPassFilter.h>
-#include "AP_ICEngine.h"
 #include <AP_RPM/AP_RPM.h>
 
 extern const AP_HAL::HAL& hal;
@@ -168,7 +169,8 @@ AP_ICEngine::AP_ICEngine(const AP_RPM &_rpm) :
     }
     _singleton = this;
 
-    _rpm_filter.set_cutoff_frequency(1 / AP::scheduler().get_loop_period_s(), 0.5f);
+    // ICEngine runs at 10Hz
+    _rpm_filter.set_cutoff_frequency(10, 0.5f);
 }
 
 /*
@@ -532,3 +534,5 @@ AP_ICEngine *ice() {
         return AP_ICEngine::get_singleton();
     }
 }
+
+#endif  // AP_ICENGINE_ENABLED

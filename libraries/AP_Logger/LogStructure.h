@@ -139,6 +139,7 @@ const struct MultiplierStructure log_Multipliers[] = {
 #include <AP_AIS/LogStructure.h>
 #include <AP_HAL_ChibiOS/LogStructure.h>
 #include <AP_RPM/LogStructure.h>
+#include <AC_Fence/LogStructure.h>
 
 // structure used to define logging format
 // It is packed on ChibiOS to save flash space; however, this causes problems
@@ -205,6 +206,7 @@ struct PACKED log_Parameter {
     uint64_t time_us;
     char name[16];
     float value;
+    float default_value;
 };
 
 struct PACKED log_DSF {
@@ -874,8 +876,8 @@ struct PACKED log_VER {
 // @Field: TimeUS: Time since system startup
 // @Field: TS: target system for command
 // @Field: TC: target component for command
-// @Field: SS: target system for command
-// @Field: SC: target component for command
+// @Field: SS: source system for command
+// @Field: SC: source component for command
 // @Field: Fr: command frame
 // @Field: Cmd: mavlink command enum value
 // @Field: P1: first parameter from mavlink packet
@@ -920,6 +922,7 @@ struct PACKED log_VER {
 // @Field: TimeUS: Time since system startup
 // @Field: Name: parameter name
 // @Field: Value: parameter value
+// @Field: Default: default parameter value for this board and config
 
 // @LoggerMessage: PIDR,PIDP,PIDY,PIDA,PIDS,PIDN,PIDE
 // @Description: Proportional/Integral/Derivative gain values for Roll/Pitch/Yaw/Altitude/Steering
@@ -1213,7 +1216,7 @@ struct PACKED log_VER {
     { LOG_MULT_MSG, sizeof(log_Format_Multiplier), \
       "MULT", "Qbd",      "TimeUS,Id,Mult", "s--","F--" },   \
     { LOG_PARAMETER_MSG, sizeof(log_Parameter), \
-     "PARM", "QNf",        "TimeUS,Name,Value", "s--", "F--"  },       \
+     "PARM", "QNff",        "TimeUS,Name,Value,Default", "s---", "F---"  },       \
 LOG_STRUCTURE_FROM_GPS \
     { LOG_MESSAGE_MSG, sizeof(log_Message), \
       "MSG",  "QZ",     "TimeUS,Message", "s-", "F-"}, \
@@ -1288,6 +1291,7 @@ LOG_STRUCTURE_FROM_NAVEKF \
 LOG_STRUCTURE_FROM_AHRS \
 LOG_STRUCTURE_FROM_HAL_CHIBIOS \
 LOG_STRUCTURE_FROM_RPM \
+LOG_STRUCTURE_FROM_FENCE \
     { LOG_DF_FILE_STATS, sizeof(log_DSF), \
       "DSF", "QIHIIII", "TimeUS,Dp,Blk,Bytes,FMn,FMx,FAv", "s--b---", "F--0---" }, \
     { LOG_RALLY_MSG, sizeof(log_Rally), \
@@ -1410,6 +1414,7 @@ enum LogMessages : uint8_t {
     LOG_VER_MSG,
     LOG_RCOUT2_MSG,
     LOG_RCOUT3_MSG,
+    LOG_IDS_FROM_FENCE,
 
     _LOG_LAST_MSG_
 };

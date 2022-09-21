@@ -22,7 +22,10 @@ class TestBuildOptions(object):
                  do_step_disable_none=False,
                  do_step_disable_defaults=True,
                  do_step_disable_in_turn=True,
-                 build_targets=None):
+                 build_targets=None,
+                 board="DevEBoxH7v2",
+                 extra_hwdef=None):
+        self.extra_hwdef = extra_hwdef
         self.sizes_nothing_disabled = None
         self.match_glob = match_glob
         self.do_step_disable_all = do_step_disable_all
@@ -32,6 +35,7 @@ class TestBuildOptions(object):
         self.build_targets = build_targets
         if self.build_targets is None:
             self.build_targets = self.all_targets()
+        self._board = board
 
     @staticmethod
     def all_targets():
@@ -66,32 +70,46 @@ class TestBuildOptions(object):
         ret = {
             feature.define: 0,
         }
-        if feature.dependency is None:
-            return ret
-        for depname in feature.dependency.split(','):
-            dep = None
-            for f in options:
-                if f.label == depname:
-                    dep = f
-            if dep is None:
-                raise ValueError("Invalid dep (%s)" % dep)
-            ret.update(self.get_defines(dep, options))
+        added_one = True
+        while added_one:
+            added_one = False
+            for option in options:
+                if option.define in ret:
+                    continue
+                if option.dependency is None:
+                    continue
+                for dep in option.dependency.split(','):
+                    f = self.get_option_by_label(dep, options)
+                    if f.define not in ret:
+                        continue
+
+                    print("%s requires %s" % (option.define, f.define))
+                    added_one = True
+                    ret[option.define] = 0
+                    break
         return ret
 
     def test_feature(self, feature, options):
-        # defines = self.get_defines(feature, options)
-        defines = {
-            feature.define: 0,
-        }
+        defines = self.get_defines(feature, options)
+
+        if len(defines.keys()) > 1:
+            self.progress("Disabling %s disables (%s)" % (
+                feature.define,
+                ",".join(defines.keys())))
+
         self.test_compile_with_defines(defines)
 
     def board(self):
         '''returns board to build for'''
-        return "BeastH7v2"
+        return self._board
 
     def test_compile_with_defines(self, defines):
         extra_hwdef_filepath = "/tmp/extra.hwdef"
         self.write_defines_to_file(defines, extra_hwdef_filepath)
+        if self.extra_hwdef is not None:
+            content = open(self.extra_hwdef, "r").read()
+            with open(extra_hwdef_filepath, "a") as f:
+                f.write(content)
         util.waf_configure(
             self.board(),
             extra_hwdef=extra_hwdef_filepath,
@@ -142,6 +160,12 @@ class TestBuildOptions(object):
             count += 1
             self.disable_in_turn_check_sizes(feature, self.sizes_nothing_disabled)
 
+    def get_option_by_label(self, label, options):
+        for x in options:
+            if x.label == label:
+                return x
+        raise ValueError("No such option (%s)" % label)
+
     def run_disable_all(self):
         options = self.get_build_options_from_ardupilot_tree()
         defines = {}
@@ -163,7 +187,14 @@ class TestBuildOptions(object):
             defines[feature.define] = feature.default
         self.test_compile_with_defines(defines)
 
+    def check_deps_consistency(self):
+        # self.progress("Checking deps consistency")
+        options = self.get_build_options_from_ardupilot_tree()
+        for feature in options:
+            self.get_defines(feature, options)
+
     def run(self):
+        self.check_deps_consistency()
         if self.do_step_run_with_defaults:
             self.progress("Running run-with-defaults step")
             self.run_with_defaults()
@@ -202,6 +233,14 @@ if __name__ == '__main__':
                       choices=TestBuildOptions.all_targets(),
                       action='append',
                       help='vehicle targets to build')
+    parser.add_option("--extra-hwdef",
+                      type='string',
+                      default=None,
+                      help="file containing extra hwdef information")
+    parser.add_option("--board",
+                      type='string',
+                      default="DevEBoxH7v2",
+                      help='board to build for')
 
     opts, args = parser.parse_args()
 
@@ -212,5 +251,7 @@ if __name__ == '__main__':
         do_step_disable_defaults=not opts.no_run_with_defaults,
         do_step_disable_in_turn=not opts.no_disable_in_turn,
         build_targets=opts.build_targets,
+        board=opts.board,
+        extra_hwdef=opts.extra_hwdef,
     )
     tbo.run()

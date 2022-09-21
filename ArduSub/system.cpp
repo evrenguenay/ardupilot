@@ -24,10 +24,6 @@ void Sub::init_ardupilot()
     g2.gripper.init();
 #endif
 
-#if AC_FENCE == ENABLED
-    fence.init();
-#endif
-
     // initialise notify system
     notify.init();
 
@@ -141,7 +137,7 @@ void Sub::init_ardupilot()
 #endif
 
     // initialise AP_RPM library
-#if RPM_ENABLED == ENABLED
+#if AP_RPM_ENABLED
     rpm_sensor.init();
 #endif
 

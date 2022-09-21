@@ -237,6 +237,7 @@ void NavEKF3_core::InitialiseVariables()
     dt = 0;
     velDotNEDfilt.zero();
     lastKnownPositionNE.zero();
+    lastKnownPositionD = 0;
     prevTnb.zero();
     memset(&P[0][0], 0, sizeof(P));
     memset(&KH[0][0], 0, sizeof(KH));
@@ -294,9 +295,12 @@ void NavEKF3_core::InitialiseVariables()
     sAccFilterState1 = 0.0f;
     sAccFilterState2 = 0.0f;
     lastGpsCheckTime_ms = 0;
-    lastInnovPassTime_ms = 0;
-    lastInnovFailTime_ms = 0;
+    lastGpsInnovPassTime_ms = 0;
+    lastGpsInnovFailTime_ms = 0;
+    lastGpsVertAccPassTime_ms = 0;
+    lastGpsVertAccFailTime_ms = 0;
     gpsAccuracyGood = false;
+    gpsAccuracyGoodForAltitude = false;
     gpsloc_prev = {};
     gpsDriftNE = 0.0f;
     gpsVertVelFilt = 0.0f;

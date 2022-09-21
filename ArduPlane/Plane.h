@@ -97,10 +97,6 @@
 #include "afs_plane.h"
 #endif
 
-#if AC_FENCE == ENABLED
-#include <AC_Fence/AC_Fence.h>
-#endif
-
 // Local modules
 #include "defines.h"
 #include "mode.h"
@@ -198,9 +194,11 @@ private:
 
     AP_Vehicle::FixedWing::Rangefinder_State rangefinder_state;
 
+#if AP_RPM_ENABLED
     AP_RPM rpm_sensor;
+#endif
 
-    AP_TECS TECS_controller{ahrs, aparm, landing};
+    AP_TECS TECS_controller{ahrs, aparm, landing, MASK_LOG_TECS};
     AP_L1_Control L1_controller{ahrs, &TECS_controller};
 
     // Attitude to servo controllers
@@ -238,13 +236,13 @@ private:
     AP_Navigation *nav_controller = &L1_controller;
 
     // Camera
-#if CAMERA == ENABLED
+#if AP_CAMERA_ENABLED
     AP_Camera camera{MASK_LOG_CAMERA};
 #endif
 
 #if AP_OPTICALFLOW_ENABLED
     // Optical flow sensor
-    OpticalFlow optflow;
+    AP_OpticalFlow optflow;
 #endif
 
     // Rally Ponints
@@ -252,10 +250,6 @@ private:
 
 #if OSD_ENABLED || OSD_PARAM_ENABLED
     AP_OSD osd;
-#endif
-
-#if AC_FENCE == ENABLED
-    AC_Fence fence;
 #endif
 
     ModeCircle mode_circle;
@@ -876,7 +870,7 @@ private:
     // Log.cpp
     uint32_t last_log_fast_ms;
 
-    void Log_Write_Fast(void);
+    void Log_Write_FullRate(void);
     void Log_Write_Attitude(void);
     void Log_Write_Control_Tuning();
     void Log_Write_OFG_Guided();
@@ -886,7 +880,6 @@ private:
     void Log_Write_RC(void);
     void Log_Write_Vehicle_Startup_Messages();
     void Log_Write_AETR();
-    void Log_Write_MavCmdI(const mavlink_command_int_t &packet);
     void log_init();
 
     // Parameters.cpp
@@ -983,10 +976,11 @@ private:
     void handle_battery_failsafe(const char* type_str, const int8_t action);
     bool failsafe_in_landing_sequence() const;  // returns true if the vehicle is in landing sequence.  Intended only for use in failsafe code.
 
-#if AC_FENCE == ENABLED
+#if AP_FENCE_ENABLED
     // fence.cpp
     void fence_check();
     bool fence_stickmixing() const;
+    bool in_fence_recovery() const;
 #endif
 
     // ArduPlane.cpp
@@ -1014,8 +1008,8 @@ private:
     void airspeed_ratio_update(void);
 #endif
     void compass_save(void);
-    void update_logging1(void);
-    void update_logging2(void);
+    void update_logging10(void);
+    void update_logging25(void);
     void update_control_mode(void);
     void update_fly_forward(void);
     void update_flight_stage();

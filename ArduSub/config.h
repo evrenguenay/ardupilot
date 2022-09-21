@@ -35,14 +35,6 @@
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
-// RPM
-//
-
-#ifndef RPM_ENABLED
-# define RPM_ENABLED DISABLED
-#endif
-
-//////////////////////////////////////////////////////////////////////////////
 // RCMAP
 //
 
@@ -109,13 +101,6 @@
 // Nav-Guided - allows external nav computer to control vehicle
 #ifndef NAV_GUIDED
 # define NAV_GUIDED    ENABLED
-#endif
-
-//////////////////////////////////////////////////////////////////////////////
-// CAMERA TRIGGER AND CONTROL
-//
-#ifndef CAMERA
-# define CAMERA        DISABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -228,11 +213,6 @@
     MASK_LOG_COMPASS | \
     MASK_LOG_CAMERA | \
     MASK_LOG_MOTBATT
-#endif
-
-// Enable/disable Fence
-#ifndef AC_FENCE
-#define AC_FENCE ENABLED
 #endif
 
 #ifndef AC_RALLY

@@ -296,7 +296,8 @@ function mavlink_mission_item_int_t_ud:param1(value) end
 local Parameter_ud = {}
 
 ---@return Parameter_ud
-function Parameter() end
+---@param name? string
+function Parameter(name) end
 
 -- desc
 ---@param value number
@@ -626,10 +627,12 @@ local AP_HAL__I2CDevice_ud = {}
 ---@param address integer
 function AP_HAL__I2CDevice_ud:set_address(address) end
 
--- desc
+-- If no read length is provided a single register will be read and returned.
+-- If read length is provided a table of register values are returned.
 ---@param register_num integer
----@return integer|nil
-function AP_HAL__I2CDevice_ud:read_registers(register_num) end
+---@param read_length? integer
+---@return integer|table|nil
+function AP_HAL__I2CDevice_ud:read_registers(register_num, read_length) end
 
 -- desc
 ---@param register_num integer
@@ -1119,6 +1122,10 @@ function esc_telem:get_rpm(instance) end
 ---@param param3 number -- error rate
 function esc_telem:update_rpm(esc_index, rpm, error_rate) end
 
+-- set scale factor for RPM on a motor
+---@param param1 motor index (0 is first motor)
+---@param param2 scale factor
+function esc_telem:set_rpm_scale(esc_index, scale_factor) end
 
 -- desc
 ---@class optical_flow
