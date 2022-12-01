@@ -25,7 +25,7 @@ void Rover::init_ardupilot()
 #endif
 
     // init gripper
-#if GRIPPER_ENABLED == ENABLED
+#if AP_GRIPPER_ENABLED
     g2.gripper.init();
 #endif
 
@@ -99,6 +99,11 @@ void Rover::init_ardupilot()
     // init torqeedo motor driver
     g2.torqeedo.init();
 #endif
+
+#if AP_OPTICALFLOW_ENABLED
+    // initialise optical flow sensor
+    optflow.init(MASK_LOG_OPTFLOW);
+#endif      // AP_OPTICALFLOW_ENABLED
 
     relay.init();
 

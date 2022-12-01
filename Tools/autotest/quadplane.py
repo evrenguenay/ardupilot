@@ -795,14 +795,16 @@ class AutoTestQuadPlane(AutoTest):
         '''Test ICE Engine support'''
         rc_engine_start_chan = 11
         self.set_parameters({
-            'SERVO13_FUNCTION': 67,  # ignition
-            'SERVO14_FUNCTION': 69,  # starter
-            'ICE_ENABLE': 1,
             'ICE_START_CHAN': rc_engine_start_chan,
-            'ICE_RPM_CHAN': 1,
-            'RPM1_TYPE': 10,
         })
-        self.reboot_sitl()
+        model = "quadplane-ice"
+
+        self.customise_SITL_commandline(
+            [],
+            model=model,
+            defaults_filepath=self.model_defaults_filepath(model),
+            wipe=False)
+
         self.wait_ready_to_arm()
         self.wait_rpm(1, 0, 0, minimum_duration=1)
         self.arm_vehicle()
@@ -827,17 +829,31 @@ class AutoTestQuadPlane(AutoTest):
         self.disarm_vehicle(force=True)
         self.reboot_sitl()
 
+        self.start_subtest("Testing throttle out in manual mode")
+        self.change_mode('MANUAL')
+        self.set_rc(3, 1700)
+        self.wait_servo_channel_value(3, 2000)
+        self.set_parameter("ICE_OPTIONS", 4)
+        # remember that throttle is reversed!
+        self.wait_servo_channel_value(3, 1300)
+        self.change_mode('FBWA')
+        self.wait_servo_channel_value(3, 2000)
+
     def ICEngineMission(self):
         '''Test ICE Engine Mission support'''
         rc_engine_start_chan = 11
         self.set_parameters({
-            'SERVO13_FUNCTION': 67,  # ignition
-            'SERVO14_FUNCTION': 69,  # starter
-            'ICE_ENABLE': 1,
             'ICE_START_CHAN': rc_engine_start_chan,
-            'ICE_RPM_CHAN': 1,
-            'RPM1_TYPE': 10,
         })
+        model = "quadplane-ice"
+
+        self.customise_SITL_commandline(
+            [],
+            model=model,
+            defaults_filepath=self.model_defaults_filepath(model),
+            wipe=False)
+
+        self.reboot_sitl()
         self.load_mission("mission.txt")
         self.wait_ready_to_arm()
         self.set_rc(rc_engine_start_chan, 2000)

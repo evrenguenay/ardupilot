@@ -24,7 +24,6 @@
 #if HAL_SMARTAUDIO_ENABLED
 
 #include <AP_Param/AP_Param.h>
-#include <AP_SerialManager/AP_SerialManager.h>
 #include <AP_HAL/utility/RingBuffer.h>
 #include "AP_VideoTX.h"
 
@@ -161,9 +160,7 @@ public:
     }
 
     /* Do not allow copies */
-    AP_SmartAudio(const AP_SmartAudio &other) = delete;
-
-    AP_SmartAudio &operator=(const AP_SmartAudio&) = delete;
+    CLASS_NO_COPY(AP_SmartAudio);
 
     // init threads and lookup for io uart.
     bool init();

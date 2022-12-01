@@ -586,7 +586,7 @@ const AP_Param::Info Copter::var_info[] = {
     GOBJECT(can_mgr,        "CAN_",       AP_CANManager),
 #endif
 
-#if SPRAYER_ENABLED == ENABLED
+#if HAL_SPRAYER_ENABLED
     // @Group: SPRAY_
     // @Path: ../libraries/AC_Sprayer/AC_Sprayer.cpp
     GOBJECT(sprayer,                "SPRAY_",       AC_Sprayer),
@@ -617,7 +617,7 @@ const AP_Param::Info Copter::var_info[] = {
     GOBJECT(avoid,      "AVOID_",   AC_Avoid),
 #endif
 
-#if AC_RALLY == ENABLED
+#if HAL_RALLY_ENABLED
     // @Group: RALLY_
     // @Path: AP_Rally.cpp,../libraries/AP_Rally/AP_Rally.cpp
     GOBJECT(rally,      "RALLY_",   AP_Rally_Copter),
@@ -825,7 +825,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     AP_SUBGROUPINFO(stats, "STAT", 12, ParametersG2, AP_Stats),
 #endif
 
-#if GRIPPER_ENABLED == ENABLED
+#if AP_GRIPPER_ENABLED
     // @Group: GRIP_
     // @Path: ../libraries/AP_Gripper/AP_Gripper.cpp
     AP_SUBGROUPINFO(gripper, "GRIP_", 13, ParametersG2, AP_Gripper),
@@ -1485,10 +1485,7 @@ void Copter::convert_pid_parameters(void)
         // PARAMETER_CONVERSION - Added: Oct-2019
         { Parameters::k_param_pos_control, 388, AP_PARAM_FLOAT, "PSC_ACCZ_FLTE" },
     };
-    uint8_t filt_table_size = ARRAY_SIZE(ff_and_filt_conversion_info);
-    for (uint8_t i=0; i<filt_table_size; i++) {
-        AP_Param::convert_old_parameters(&ff_and_filt_conversion_info[i], 1.0f);
-    }
+    AP_Param::convert_old_parameters(&ff_and_filt_conversion_info[0], ARRAY_SIZE(ff_and_filt_conversion_info));
 
 #if HAL_INS_NUM_HARMONIC_NOTCH_FILTERS > 1
     if (!ins.harmonic_notches[1].params.enabled()) {
@@ -1500,10 +1497,7 @@ void Copter::convert_pid_parameters(void)
             { Parameters::k_param_ins, 357, AP_PARAM_FLOAT, "INS_HNTC2_FREQ" },
             { Parameters::k_param_ins, 421, AP_PARAM_FLOAT, "INS_HNTC2_BW" },
         };
-        uint8_t notchfilt_table_size = ARRAY_SIZE(notchfilt_conversion_info);
-        for (uint8_t i=0; i<notchfilt_table_size; i++) {
-            AP_Param::convert_old_parameters(&notchfilt_conversion_info[i], 1.0f);
-        }
+        AP_Param::convert_old_parameters(&notchfilt_conversion_info[0], ARRAY_SIZE(notchfilt_conversion_info));
         AP_Param::set_default_by_name("INS_HNTC2_MODE", 0);
         AP_Param::set_default_by_name("INS_HNTC2_HMNCS", 1);
     }

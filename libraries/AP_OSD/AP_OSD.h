@@ -22,12 +22,14 @@
 #include <AP_Math/AP_Math.h>
 #include <AP_ESC_Telem/AP_ESC_Telem.h>
 #include <RC_Channel/RC_Channel.h>
-#include <GCS_MAVLink/GCS.h>
+#include <GCS_MAVLink/GCS_config.h>
 #include <AP_OLC/AP_OLC.h>
 #include <AP_MSP/msp.h>
 #include <AP_Baro/AP_Baro.h>
+#if HAL_GCS_ENABLED
 #include <GCS_MAVLink/GCS_MAVLink.h>
-#include <AC_Fence/AC_Fence.h>
+#endif
+#include <AC_Fence/AC_Fence_config.h>
 
 #ifndef OSD_ENABLED
 #define OSD_ENABLED !HAL_MINIMIZE_FEATURES
@@ -349,8 +351,10 @@ public:
 
     static const ParamMetadata _param_metadata[];
 
+#if HAL_GCS_ENABLED
     AP_OSD_ParamSetting(uint8_t param_number, bool enabled, uint8_t x, uint8_t y, int16_t key, int8_t idx, int32_t group,
         int8_t type = OSD_PARAM_NONE, float min = 0.0f, float max = 1.0f, float incr = 0.001f);
+#endif
     AP_OSD_ParamSetting(uint8_t param_number);
     AP_OSD_ParamSetting(const Initializer& initializer);
 
@@ -408,8 +412,8 @@ public:
     void draw(void) override;
 #endif
 #if HAL_GCS_ENABLED
-    void handle_write_msg(const mavlink_osd_param_config_t& packet, const GCS_MAVLINK& link);
-    void handle_read_msg(const mavlink_osd_param_show_config_t& packet, const GCS_MAVLINK& link);
+    void handle_write_msg(const mavlink_osd_param_config_t& packet, const class GCS_MAVLINK& link);
+    void handle_read_msg(const mavlink_osd_param_show_config_t& packet, const class GCS_MAVLINK& link);
 #endif
     // get a setting and associated metadata
     AP_OSD_ParamSetting* get_setting(uint8_t param_idx);
@@ -460,8 +464,7 @@ public:
     AP_OSD();
 
     /* Do not allow copies */
-    AP_OSD(const AP_OSD &other) = delete;
-    AP_OSD &operator=(const AP_OSD&) = delete;
+    CLASS_NO_COPY(AP_OSD);
 
     // get singleton instance
     static AP_OSD *get_singleton()
@@ -594,7 +597,7 @@ public:
 #endif
     // handle OSD parameter configuration
 #if HAL_GCS_ENABLED
-    void handle_msg(const mavlink_message_t &msg, const GCS_MAVLINK& link);
+    void handle_msg(const mavlink_message_t &msg, const class GCS_MAVLINK& link);
 #endif
 
     // allow threads to lock against OSD update

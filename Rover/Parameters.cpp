@@ -19,7 +19,7 @@ const AP_Param::Info Rover::var_info[] = {
     // @Param: LOG_BITMASK
     // @DisplayName: Log bitmask
     // @Description: Bitmap of what log types to enable in on-board logger. This value is made up of the sum of each of the log types you want to be saved. On boards supporting microSD cards or other large block-storage devices it is usually best just to enable all basic log types by setting this to 65535.
-    // @Bitmask: 0:Fast Attitude,1:Medium Attitude,2:GPS,3:System Performance,4:Throttle,5:Navigation Tuning,7:IMU,8:Mission Commands,9:Battery Monitor,10:Rangefinder,11:Compass,12:Camera,13:Steering,14:RC Input-Output,19:Raw IMU,20:Video Stabilization
+    // @Bitmask: 0:Fast Attitude,1:Medium Attitude,2:GPS,3:System Performance,4:Throttle,5:Navigation Tuning,7:IMU,8:Mission Commands,9:Battery Monitor,10:Rangefinder,11:Compass,12:Camera,13:Steering,14:RC Input-Output,19:Raw IMU,20:Video Stabilization,21:Optical Flow
     // @User: Advanced
     GSCALAR(log_bitmask,            "LOG_BITMASK",      DEFAULT_LOG_BITMASK),
 
@@ -391,6 +391,12 @@ const AP_Param::Info Rover::var_info[] = {
     GOBJECT(osd, "OSD", AP_OSD),
 #endif
 
+#if AP_OPTICALFLOW_ENABLED
+    // @Group: FLOW
+    // @Path: ../libraries/AP_OpticalFlow/AP_OpticalFlow.cpp
+    GOBJECT(optflow,   "FLOW", AP_OpticalFlow),
+#endif
+
     // @Group:
     // @Path: ../libraries/AP_Vehicle/AP_Vehicle.cpp
     { AP_PARAM_GROUP, "", Parameters::k_param_vehicle, (const void *)&rover, {group_info : AP_Vehicle::var_info} },
@@ -502,10 +508,10 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @DisplayName: BalanceBot Maximum Pitch
     // @Description: Pitch angle in degrees at 100% throttle
     // @Units: deg
-    // @Range: 0 5
+    // @Range: 0 15
     // @Increment: 0.1
     // @User: Standard
-    AP_GROUPINFO("BAL_PITCH_MAX", 21, ParametersG2, bal_pitch_max, 2),
+    AP_GROUPINFO("BAL_PITCH_MAX", 21, ParametersG2, bal_pitch_max, 10),
 
     // @Param: CRASH_ANGLE
     // @DisplayName: Crash Angle
@@ -583,7 +589,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("MIS_DONE_BEHAVE", 38, ParametersG2, mis_done_behave, 0),
 
-#if GRIPPER_ENABLED == ENABLED
+#if AP_GRIPPER_ENABLED
     // @Group: GRIP_
     // @Path: ../libraries/AP_Gripper/AP_Gripper.cpp
     AP_SUBGROUPINFO(gripper, "GRIP_", 39, ParametersG2, AP_Gripper),
@@ -677,6 +683,14 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @Path: mode_dock.cpp
     AP_SUBGROUPPTR(mode_dock_ptr, "DOCK", 54, ParametersG2, ModeDock),
 #endif
+
+    // @Param: MANUAL_STR_EXPO
+    // @DisplayName: Manual Steering Expo
+    // @Description: Manual steering expo to allow faster steering when stick at edges
+    // @Values: 0:Disabled,0.1:Very Low,0.2:Low,0.3:Medium,0.4:High,0.5:Very High
+    // @Range: -0.5 0.95
+    // @User: Advanced
+    AP_GROUPINFO("MANUAL_STR_EXPO", 55, ParametersG2, manual_steering_expo, 0),
 
     AP_GROUPEND
 };
@@ -862,10 +876,7 @@ void Rover::load_parameters(void)
         { Parameters::k_param_g2, 25354, AP_PARAM_FLOAT, "ATC_SAIL_FLTE" },
         { Parameters::k_param_g2, 29450, AP_PARAM_FLOAT, "ATC_SAIL_FF" },
     };
-    uint8_t filt_table_size = ARRAY_SIZE(ff_and_filt_conversion_info);
-    for (uint8_t i=0; i<filt_table_size; i++) {
-        AP_Param::convert_old_parameters(&ff_and_filt_conversion_info[i], 1.0f);
-    }
+    AP_Param::convert_old_parameters(&ff_and_filt_conversion_info[0], ARRAY_SIZE(ff_and_filt_conversion_info));
 
     // configure safety switch to allow stopping the motors while armed
 #if HAL_HAVE_SAFETY_SWITCH

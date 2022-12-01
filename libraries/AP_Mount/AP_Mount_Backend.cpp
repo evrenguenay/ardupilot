@@ -1,6 +1,7 @@
 #include "AP_Mount_Backend.h"
 #if HAL_MOUNT_ENABLED
 #include <AP_AHRS/AP_AHRS.h>
+#include <GCS_MAVLink/GCS.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -20,6 +21,24 @@ float AP_Mount_Backend::apply_limits(float ref_val, float max_limit, float min_l
     }
 
     return ret_val;
+}
+
+// get mount's current attitude in euler angles in degrees.  yaw angle is in body-frame
+// returns true on success
+bool AP_Mount_Backend::get_attitude_euler(float& roll_deg, float& pitch_deg, float& yaw_bf_deg)
+{
+    // by default re-use get_attitude_quaternion and convert to Euler angles
+    Quaternion att_quat;
+    if (!get_attitude_quaternion(att_quat)) {
+        return false;
+    }
+
+    float roll_rad, pitch_rad, yaw_rad;
+    att_quat.to_euler(roll_rad, pitch_rad, yaw_rad);
+    roll_deg = degrees(roll_rad);
+    pitch_deg = degrees(pitch_rad);
+    yaw_bf_deg = degrees(yaw_rad);
+    return true;
 }
 
 // set angle target in degrees

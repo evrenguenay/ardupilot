@@ -2296,16 +2296,17 @@ Brakes have negligible effect (with=%0.2fm without=%0.2fm delta=%0.2fm)
         self.progress("Asserted mission count (type=%u) is %u after %fs" % (
             (mission_type, m.count, delta)))
 
-    def get_mission_item_int_on_link(self, item, mav, target_system, target_component, mission_type):
+    def get_mission_item_int_on_link(self, item, mav, target_system, target_component, mission_type, delay_fn=None):
         self.drain_mav(mav=mav, unparsed=True)
         mav.mav.mission_request_int_send(target_system,
                                          target_component,
                                          item,
                                          mission_type)
-        m = mav.recv_match(type='MISSION_ITEM_INT',
-                           blocking=True,
-                           timeout=60,
-                           condition='MISSION_ITEM_INT.mission_type==%u' % mission_type)
+        m = self.assert_receive_message(
+            'MISSION_ITEM_INT',
+            timeout=60,
+            condition='MISSION_ITEM_INT.mission_type==%u' % mission_type,
+            delay_fn=delay_fn)
         if m is None:
             raise NotAchievedException("Did not receive MISSION_ITEM_INT")
         if m.mission_type != mission_type:
@@ -3086,12 +3087,16 @@ Brakes have negligible effect (with=%0.2fm without=%0.2fm delta=%0.2fm)
                 target_component,
                 mavutil.mavlink.MAV_MISSION_TYPE_RALLY)
             self.progress("Get first item on new link")
+
+            def drain_self_mav_fn():
+                self.drain_mav(self.mav)
             m2 = self.get_mission_item_int_on_link(
                 2,
                 mav2,
                 target_system,
                 target_component,
-                mavutil.mavlink.MAV_MISSION_TYPE_RALLY)
+                mavutil.mavlink.MAV_MISSION_TYPE_RALLY,
+                delay_fn=drain_self_mav_fn)
             self.progress("Get first item on original link")
             m = self.get_mission_item_int_on_link(
                 2,
@@ -5932,6 +5937,7 @@ Brakes have negligible effect (with=%0.2fm without=%0.2fm delta=%0.2fm)
             "RNGFND1_TYPE" : 17,     # NMEA must attach uart to SITL
             "RNGFND1_ORIENT" : 25,   # Set to downward facing
             "SERIAL7_PROTOCOL" : 9,  # Rangefinder on uartH
+            "SERIAL7_BAUD" : 9600,   # Rangefinder specific baudrate
 
             "RNGFND3_TYPE" : 2,      # MaxbotixI2C
             "RNGFND3_ADDR" : 112,    # 0x70 address from SIM_I2C.cpp
@@ -6077,13 +6083,13 @@ Brakes have negligible effect (with=%0.2fm without=%0.2fm delta=%0.2fm)
                 initial_position = self.offset_location_ne(target, -20, -2)
                 self.drive_to_location(initial_position)
                 self.change_mode(8) # DOCK mode
-                self.wait_distance_to_location(target, 0, 0.5, timeout=120)
+                max_delta = 1
+                self.wait_distance_to_location(target, 0, max_delta, timeout=180)
                 self.disarm_vehicle()
                 self.assert_receive_message('GLOBAL_POSITION_INT')
                 new_pos = self.mav.location()
                 delta = abs(self.get_distance(target, new_pos) - stopping_dist)
                 self.progress("Docked %f metres from stopping point" % delta)
-                max_delta = 0.5
                 if delta > max_delta:
                     raise NotAchievedException("Did not dock close enough to stopping point (%fm > %fm" % (delta, max_delta))
 
@@ -6102,6 +6108,110 @@ Brakes have negligible effect (with=%0.2fm without=%0.2fm delta=%0.2fm)
 
         self.reboot_sitl()
         self.progress("All done")
+
+    def PrivateChannel(self):
+        '''test the serial option bit specifying a mavlink channel as private'''
+        global mav2
+        mav2 = mavutil.mavlink_connection("tcp:localhost:5763",
+                                          robust_parsing=True,
+                                          source_system=7,
+                                          source_component=7)
+        # send a heartbeat or two to make sure ArduPilot's aware:
+
+        def heartbeat_on_mav2(mav, m):
+            '''send a heartbeat on mav2 whenever we get one on mav'''
+            global mav2
+            if mav == mav2:
+                return
+            if m.get_type() == 'HEARTBEAT':
+                mav2.mav.heartbeat_send(
+                    mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER,
+                    mavutil.mavlink.MAV_AUTOPILOT_INVALID,
+                    0,
+                    0,
+                    0)
+                return
+
+        self.assert_receive_message("HEARTBEAT", mav=mav2)
+
+        # ensure a targetted message is received:
+        self.install_message_hook_context(heartbeat_on_mav2)
+
+        self.progress("Ensuring we can get a message normally")
+        self.poll_message("AUTOPILOT_VERSION", mav=mav2)
+
+        self.progress("Polling AUTOPILOT_VERSION from random sysid")
+        self.send_poll_message("AUTOPILOT_VERSION", mav=mav2, target_sysid=134)
+        self.assert_not_receive_message("AUTOPILOT_VERSION", mav=mav2, timeout=10)
+
+        # make sure we get heartbeats on the main channel from the non-private mav2:
+        tstart = self.get_sim_time()
+        while True:
+            if self.get_sim_time_cached() - tstart > 5:
+                raise NotAchievedException("Did not get expected heartbeat from %u" % 7)
+            m = self.assert_receive_message("HEARTBEAT")
+            if m.get_srcSystem() == 7:
+                self.progress("Got heartbeat from (%u) on non-private channel" % 7)
+                break
+
+        # make sure we receive heartbeats from the autotest suite into
+        # the component:
+        tstart = self.get_sim_time()
+        while True:
+            if self.get_sim_time_cached() - tstart > 5:
+                raise NotAchievedException("Did not get expected heartbeat from %u" % self.mav.source_system)
+            m = self.assert_receive_message("HEARTBEAT", mav=mav2)
+            if m.get_srcSystem() == self.mav.source_system:
+                self.progress("Got heartbeat from (%u) on non-private channel" % self.mav.source_system)
+                break
+
+        def printmessage(mav, m):
+            global mav2
+            if mav == mav2:
+                return
+
+            print("Got (%u/%u) (%s) " % (m.get_srcSystem(), m.get_srcComponent(), str(m)))
+
+#        self.install_message_hook_context(printmessage)
+
+        # ensure setting the private channel mask doesn't cause us to
+        # execute these commands:
+        self.set_parameter("SERIAL2_OPTIONS", 1024)
+        self.reboot_sitl()  # mavlink-private is reboot-required
+        mav2 = mavutil.mavlink_connection("tcp:localhost:5763",
+                                          robust_parsing=True,
+                                          source_system=7,
+                                          source_component=7)
+#        self.send_debug_trap()
+        self.send_poll_message("AUTOPILOT_VERSION", mav=mav2, target_sysid=134)
+        self.assert_not_receive_message("AUTOPILOT_VERSION", mav=mav2, timeout=10)
+
+        # make sure messages from a private channel don't make it to
+        # the main channel:
+        self.drain_mav(self.mav)
+        self.drain_mav(mav2)
+
+        # make sure we do NOT get heartbeats on the main channel from
+        # the private mav2:
+        tstart = self.get_sim_time()
+        while True:
+            if self.get_sim_time_cached() - tstart > 5:
+                break
+            m = self.assert_receive_message("HEARTBEAT")
+            if m.get_srcSystem() == 7:
+                raise NotAchievedException("Got heartbeat from private channel")
+
+        self.progress("ensure no outside heartbeats reach private channels")
+        tstart = self.get_sim_time()
+        while True:
+            if self.get_sim_time_cached() - tstart > 5:
+                break
+            m = self.assert_receive_message("HEARTBEAT")
+            if m.get_srcSystem() == 1 and m.get_srcComponent() == 1:
+                continue
+            # note the above test which shows we get heartbeats from
+            # both the vehicle and this tests's special heartbeat
+            raise NotAchievedException("Got heartbeat on private channel from non-vehicle")
 
     def tests(self):
         '''return list of all tests'''
@@ -6172,6 +6282,7 @@ Brakes have negligible effect (with=%0.2fm without=%0.2fm delta=%0.2fm)
             self.EStopAtBoot,
             self.StickMixingAuto,
             self.AutoDock,
+            self.PrivateChannel,
         ])
         return ret
 

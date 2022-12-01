@@ -244,8 +244,7 @@ public:
     AP_Logger(const AP_Int32 &log_bitmask);
 
     /* Do not allow copies */
-    AP_Logger(const AP_Logger &other) = delete;
-    AP_Logger &operator=(const AP_Logger&) = delete;
+    CLASS_NO_COPY(AP_Logger);
 
     // get singleton instance
     static AP_Logger *get_singleton(void) {
@@ -436,7 +435,7 @@ public:
     } *log_write_fmts;
 
     // return (possibly allocating) a log_write_fmt for a name
-    struct log_write_fmt *msg_fmt_for_name(const char *name, const char *labels, const char *units, const char *mults, const char *fmt, const bool direct_comp = false);
+    struct log_write_fmt *msg_fmt_for_name(const char *name, const char *labels, const char *units, const char *mults, const char *fmt, const bool direct_comp = false, const bool copy_strings = false);
 
     // output a FMT message for each backend if not already done so
     void Safe_Write_Emit_FMT(log_write_fmt *f);
@@ -525,6 +524,14 @@ private:
     bool _writes_enabled:1;
     bool _force_log_disarmed:1;
     bool _force_long_log_persist:1;
+
+    struct log_write_fmt_strings {
+        char name[LS_NAME_SIZE];
+        char format[LS_FORMAT_SIZE];
+        char labels[LS_LABELS_SIZE];
+        char units[LS_UNITS_SIZE];
+        char multipliers[LS_MULTIPLIERS_SIZE];
+    };
 
     // remember formats for replay
     void save_format_Replay(const void *pBuffer);
