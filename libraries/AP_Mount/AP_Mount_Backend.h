@@ -115,6 +115,8 @@ protected:
         bool yaw_is_ef;
     };
 
+    float apply_limits(float ref_val, float max_limit, float min_limit);
+
     // returns true if user has configured a valid yaw angle range
     // allows user to disable yaw even on 3-axis gimbal
     bool yaw_range_valid() const { return (_params.yaw_angle_min < _params.yaw_angle_max); }

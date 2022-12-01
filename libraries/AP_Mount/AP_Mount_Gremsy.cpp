@@ -306,6 +306,7 @@ void AP_Mount_Gremsy::send_gimbal_device_set_attitude(float roll_rad, float pitc
         return;
     }
 
+
     // prepare flags
     const uint16_t flags = earth_frame ? (GIMBAL_DEVICE_FLAGS_ROLL_LOCK | GIMBAL_DEVICE_FLAGS_PITCH_LOCK | GIMBAL_DEVICE_FLAGS_YAW_LOCK) : 0;
 

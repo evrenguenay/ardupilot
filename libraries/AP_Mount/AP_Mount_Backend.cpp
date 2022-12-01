@@ -6,16 +6,33 @@ extern const AP_HAL::HAL& hal;
 
 #define AP_MOUNT_UPDATE_DT 0.02     // update rate in seconds.  update() should be called at this rate
 
+float AP_Mount_Backend::apply_limits(float ref_val, float max_limit, float min_limit)
+{
+    float ret_val = ref_val;
+
+    if(ref_val < min_limit)
+    {
+        ret_val = min_limit;
+    }
+    else if(ref_val > max_limit)
+    {
+        ret_val = max_limit;
+    }
+
+    return ret_val;
+}
+
 // set angle target in degrees
 // yaw_is_earth_frame (aka yaw_lock) should be true if yaw angle is earth-frame, false if body-frame
 void AP_Mount_Backend::set_angle_target(float roll_deg, float pitch_deg, float yaw_deg, bool yaw_is_earth_frame)
 {
     // set angle targets
     mavt_target.target_type = MountTargetType::ANGLE;
-    mavt_target.angle_rad.roll = radians(roll_deg);
-    mavt_target.angle_rad.pitch = radians(pitch_deg);
-    mavt_target.angle_rad.yaw = radians(yaw_deg);
+    mavt_target.angle_rad.roll = radians(apply_limits(roll_deg,_params.roll_angle_max,_params.roll_angle_min));
+    mavt_target.angle_rad.pitch = radians(apply_limits(pitch_deg, _params.pitch_angle_max, _params.pitch_angle_min));
+    mavt_target.angle_rad.yaw = radians(apply_limits(yaw_deg,_params.yaw_angle_max, _params.yaw_angle_min));
     mavt_target.angle_rad.yaw_is_ef = yaw_is_earth_frame;
+
 
     // set the mode to mavlink targeting
     set_mode(MAV_MOUNT_MODE_MAVLINK_TARGETING);
