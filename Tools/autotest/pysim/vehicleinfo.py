@@ -174,7 +174,13 @@ class VehicleInfo(object):
                                             "default_params/copter-oa-lidar.parm" ],
                 "external": True,
             },
-            "gazebo-iris-optflow-nongps-oa": {              
+            "gazebo-bee-gps-oa-gimbal": {              
+                "waf_target": "bin/arducopter",
+                "default_params_filename": ["default_params/copter.parm",
+                                            "default_params/copter-oa-gimbal-gps.parm" ],
+                "external": True,
+            },    
+            "gazebo-bee-optflow-nongps-oa": {              
                 "waf_target": "bin/arducopter",
                 "default_params_filename": ["default_params/copter.parm",
                                             "default_params/copter-optflow-nongps-oa.parm" ],
